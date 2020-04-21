@@ -123,6 +123,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "demo-app-graph-rel"
+    }
+  },
+  "defaultProject": "demo-app-graph-rel",
+  "cli": {
+    "analytics": false
+  }
 }
