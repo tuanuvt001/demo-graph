@@ -25,17 +25,27 @@ export class AppComponent implements AfterViewInit {
     white: '#F5F5F5'
   };
   public diagramNodeData: Array<go.ObjectData> = [
-    {key: 'Alpha', color: 'lightblue', geo: 'file'},
-    {key: 'Beta', color: 'orange', geo: 'alarm'},
-    {key: 'Gamma', color: 'lightgreen', geo: 'lab'},
-    {key: 'Delta', color: 'pink', geo: 'earth'}
+    {key: 'u1.1', label: 'Ứng dụng 1', color: 'lightblue', geo: 'file', group: 'gr1.1'},
+    {key: 'u1.2', label: 'Ứng dụng 2', color: 'orange', geo: 'alarm', group: 'gr1.1'},
+    {key: 'u1.3', label: 'Ứng dụng 3', color: 'lightgreen', geo: 'lab', group: 'gr1.3'},
+    {key: 'gr1', label: 'Analytic (BCG)', color: 'pink', isGroup: true},
+    {key: 'gr1.1', label: 'Ứng dụng', color: 'pink', isGroup: true, group: 'gr1'},
+    {key: 'gr1.2', label: 'Analytic Hive Metastore', color: 'pink', isGroup: true, group: 'gr1'},
+    {key: 'gr1.3', label: 'Analytic Hdfs', color: 'pink', isGroup: true, group: 'gr1'},
+    // DL DEV
+    {key: 'gr2', label: 'DL Dev', color: 'pink', isGroup: true},
+    {key: 'gr2.1', label: 'Ứng dụng', color: 'pink', isGroup: true, group: 'gr2'},
+    {key: 'u2.1', label: 'Ứng dụng 1', color: 'lightblue', geo: 'file', group: 'gr2.1'},
+    {key: 'u2.1', label: 'Ứng dụng 2', color: 'orange', geo: 'alarm', group: 'gr2.1'},
+    {key: 'u2.3', label: 'Ứng dụng 3', color: 'lightgreen', geo: 'lab', group: 'gr2.1'},
+    {key: 'gr2.2', label: 'Dev Metastore', color: 'pink', isGroup: true, group: 'gr2'},
+    {key: 'gr2.3', label: 'Chia sẻ DL Dev', color: 'pink', isGroup: true, group: 'gr2'},
+    {key: 'u2.3.1', label: 'Ứng dụng 1', color: 'lightblue', geo: 'file', group: 'gr2.3'},
+    {key: 'u2.3.2', label: 'Ứng dụng 2', color: 'orange', geo: 'alarm', group: 'gr2.3'},
+
   ];
   public diagramLinkData: Array<go.ObjectData> = [
-    {key: -1, from: 'Alpha', to: 'Beta', fromPort: 'r', toPort: '1'},
-    {key: -2, from: 'Alpha', to: 'Gamma', fromPort: 'b', toPort: 't'},
-    {key: -3, from: 'Beta', to: 'Beta'},
-    {key: -4, from: 'Gamma', to: 'Delta', fromPort: 'r', toPort: 'l'},
-    {key: -5, from: 'Delta', to: 'Alpha', fromPort: 't', toPort: 'r'}
+    {key: 'l1', from: 'gr1.3', to: 'gr2.3', fromPort: 'r', toPort: '1'},
   ];
   public diagramDivClassName = 'myDiagramDiv';
   public diagramModelData = {prop: 'value'};
@@ -61,14 +71,19 @@ export class AppComponent implements AfterViewInit {
 
     const $ = go.GraphObject.make;
     const dia = $(go.Diagram, {
-      'undoManager.isEnabled': true,
+      'undoManager.isEnabled': false,
       model: $(go.GraphLinksModel,
         {
           linkToPortIdProperty: 'toPort',
           linkFromPortIdProperty: 'fromPort',
           linkKeyProperty: 'key' // IMPORTANT! must be defined for merges and data sync when using GraphLinksModel
         }
-      )
+      ),
+      isReadOnly: true,
+      initialAutoScale: go.Diagram.UniformToFill,
+      padding: 10,
+      layout: $(go.ForceDirectedLayout, {defaultSpringLength: 100, defaultElectricalCharge: 0}),
+      maxSelectionCount: 2
     });
 
     const makePort = function(id: string, spot: go.Spot) {
@@ -93,42 +108,73 @@ export class AppComponent implements AfterViewInit {
       return geo;
     }
 
-
     // define the Node template
     dia.nodeTemplate =
-      $(go.Node, 'Auto',
-        $(go.Shape, 'Circle',
-          {fill: 'lightcoral', strokeWidth: 0, width: 65, height: 65},
-          new go.Binding('fill', 'color')),
-        $(go.Shape,
-          {margin: 3, fill: '#ffffff', strokeWidth: 0},
-          new go.Binding('geometry', 'geo', geoFunc)),
-        // Each node has a tooltip that reveals the name of its icon
-        {
-          toolTip:
-            $('ToolTip',
-              {'Border.stroke': '#ea2857', 'Border.strokeWidth': 2},
-              $(go.TextBlock, {margin: 8, stroke: '#ea2857', font: 'bold 16px sans-serif'},
-                new go.Binding('text', 'geo')))
-        }
+      $(go.Node, 'Vertical',
+        {locationObjectName: 'ICON'},
+        new go.Binding('location', 'loc', go.Point.parse).makeTwoWay(go.Point.stringify),
+        $(go.Panel, 'Spot',
+          $(go.Panel, 'Auto',
+            {name: 'ICON'},
+            $(go.Shape, 'Circle',
+              {fill: 'lightcoral', strokeWidth: 0, width: 65, height: 65},
+              new go.Binding('fill', 'color')),
+            $(go.Shape,
+              {margin: 3, fill: '#ffffff', strokeWidth: 0},
+              new go.Binding('geometry', 'geo', geoFunc)),
+            // Each node has a tooltip that reveals the name of its icon
+            {
+              toolTip:
+                $('ToolTip',
+                  {'Border.stroke': '#ea2857', 'Border.strokeWidth': 2},
+                  $(go.TextBlock, {margin: 8, stroke: '#ea2857', font: 'bold 16px sans-serif'},
+                    new go.Binding('text', 'geo')))
+            },
+          ),  // end Spot Panel
+        ), $(go.TextBlock,
+          {margin: 5, font: 'Bold 14px Sans-Serif'},
+          //the text, color, and key are all bound to the same property in the node data
+          new go.Binding('text', 'label'))
       );
 
-    $(go.Node, 'Spot',
-      $(go.Panel, 'Auto',
-        $(go.Shape, 'Diamond', {stroke: null},
-          new go.Binding('fill', 'color'),
-          new go.Binding('fill', 'color')
-        ),
-        $(go.TextBlock, {margin: 8},
-          new go.Binding('text', 'key'))
-      ),
-      // Ports
-      makePort('t', go.Spot.TopCenter),
-      makePort('l', go.Spot.Left),
-      makePort('r', go.Spot.Right),
-      makePort('b', go.Spot.BottomCenter)
-    );
+    // $(go.Node, 'Spot',
+    //   $(go.Panel, 'Auto',
+    //     $(go.Shape, 'Diamond', {stroke: null},
+    //       new go.Binding('fill', 'color'),
+    //       new go.Binding('fill', 'color')
+    //     ),
+    //     $(go.TextBlock, {margin: 8},
+    //       new go.Binding('text', 'key'))
+    //   ),
+    //   // Ports
+    //   makePort('t', go.Spot.TopCenter),
+    //   makePort('l', go.Spot.Left),
+    //   makePort('r', go.Spot.Right),
+    //   makePort('b', go.Spot.BottomCenter)
+    // );
 
+    dia.groupTemplate =
+      $(go.Group, 'Vertical',
+        $(go.TextBlock,         // group title
+          {alignment: go.Spot.TopCenter, font: 'Bold 12pt Sans-Serif'},
+          new go.Binding('text', 'label')),
+        $(go.Panel, 'Auto',
+          $(go.Shape, 'RoundedRectangle',  // surrounds the Placeholder
+            {
+              parameter1: 14,
+              fill: 'rgba(128,128,128,0.33)'
+            }),
+          $(go.Placeholder,    // represents the area of all member parts,
+            {padding: 5})  // with some extra padding around them
+        ),
+      );
+
+    dia.linkTemplate =
+      $(go.Link,
+        { routing: go.Link.AvoidsNodes },  // link route should avoid nodes
+        $(go.Shape),
+        $(go.Shape, { toArrow: "Standard" })
+      );
     return dia;
   }
 
@@ -194,7 +240,9 @@ export class AppComponent implements AfterViewInit {
       const node = e.diagram.selection.first();
       if (node instanceof go.Node) {
         appComp.selectedNode = node;
-        console.log(node);
+        alert(node.key);
+      } else if (node instanceof go.Link) {
+        alert(node.key);
       } else {
         appComp.selectedNode = null;
       }
