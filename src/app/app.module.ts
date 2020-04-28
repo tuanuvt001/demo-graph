@@ -6,17 +6,23 @@ import { AppComponent } from './app.component';
 import {GojsAngularModule} from 'gojs-angular';
 import { InspectorComponent } from './inspector/inspector.component';
 import {FormsModule} from '@angular/forms';
+import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
+import { DialogComponent } from './dialog/dialog.component';
+import {HttpClientModule} from '@angular/common/http';
 
 @NgModule({
   declarations: [
     AppComponent,
-    InspectorComponent
+    InspectorComponent,
+    DialogComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     GojsAngularModule,
-    FormsModule
+    FormsModule,
+    NgbModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
